@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                haizod
-version:             0.1.0
+version:             0.1.1
 synopsis:            An IRC bot on a Raspberry Pi 2
 homepage:            https://github.com/Lokathor/haizod
 license:             AGPL-3
@@ -14,13 +14,14 @@ build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
 
-executable heizod
-  main-is:             Main.hs
-  build-depends:       base,
-                       network,
-                       network-simple,
-                       async
-  hs-source-dirs:      src
-  default-language:    Haskell2010
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+executable haizod
+  main-is:              Main.hs
+  build-depends:        base,
+                        network,
+                        network-simple,
+                        async,
+                        bytestring
+  hs-source-dirs:       src
+  default-language:     Haskell2010
+  ghc-options:          -threaded -rtsopts -with-rtsopts=-N
 
