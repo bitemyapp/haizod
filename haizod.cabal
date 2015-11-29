@@ -14,16 +14,41 @@ build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
 
-executable haizod
-  main-is:              Main.hs
-  build-depends:        base,
+library
+    hs-source-dirs:     src
+    exposed-modules:    Haizod.IRC.Parse,
+                        Haizod.IRC.Format
+    build-depends:      base,
                         network,
                         network-simple,
                         async,
                         bytestring,
                         stm,
                         containers
-  hs-source-dirs:       src
-  default-language:     Haskell2010
-  ghc-options:          -threaded -rtsopts -with-rtsopts=-N
+    ghc-options:        -threaded -rtsopts -with-rtsopts=-N
+    default-language:   Haskell2010
 
+test-suite tests
+    type:               exitcode-stdio-1.0
+    hs-source-dirs:     tests
+    main-is:            Tests.hs
+    other-modules:      Haizod.IRC.ParseTests,
+                        Haizod.IRC.FormatTests
+    build-depends:      base,
+                        hspec,
+                        QuickCheck,
+                        haizod
+    default-language:   Haskell2010
+
+executable haizod
+    main-is:            Main.hs
+    build-depends:      base,
+                        network,
+                        network-simple,
+                        async,
+                        bytestring,
+                        stm,
+                        containers
+    hs-source-dirs:     src
+    default-language:   Haskell2010
+    ghc-options:        -threaded -rtsopts -with-rtsopts=-N
