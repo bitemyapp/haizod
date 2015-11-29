@@ -10,8 +10,10 @@ import Control.Concurrent.STM
 import Data.Set (Set)
 import qualified Data.Set as S
 import qualified Data.ByteString as B
+import Control.Monad.State
 
 import Haizod.IRC.Parse
+import Haizod.IRC.Data
 
 -- | Holds the data for an IRC Server. Will probably have more
 --   fields later, but for now it's just name and port number.
@@ -52,24 +54,33 @@ waitToQuit connectionsTVar = atomically $ do
         then return ()
         else retry
 
+isPing :: Message -> Bool
+isPing (Unsourced (Ping m)) = True
+isPing _ = False
+
 -- | Prints out all the incoming data from the socket. Once a "PING" shows up
 --   a "QUIT" message is sent and then the socket is closed and the function returns.
 printIncoming :: Socket -> IO ()
-printIncoming socket = do
-    msg <- recv socket 512
-    case msg of
-        Just s -> do
-            B.putStr s
-            if B.isPrefixOf "PING " s
-                then do
-                    --let reply = "PONG " `B.append` (B.drop 5 s)
-                    let reply = "QUIT :exiting.\r\n"
-                    B.putStr (">" `B.append` reply)
-                    send socket reply
-                    return ()
-                else printIncoming socket
-        Nothing -> do
-            print "Socket closed."
+printIncoming socket = printIncoming' ""
+    where printIncoming' oldSpare = do
+            msg <- recv socket 512
+            case msg of
+                Just bytes -> do
+                    let (messageList, newSpare) = runState (parseBytes bytes) oldSpare
+                    if null messageList
+                        then printIncoming' newSpare
+                        else do
+                            mapM_ print messageList
+                            case filter isPing messageList of
+                                [] -> printIncoming' newSpare
+                                _ -> do
+                                    let reply = "QUIT :done\r\n"
+                                    B.putStr (">" `B.append` reply)
+                                    send socket reply
+                                    closeSock socket
+                                    return ()
+                Nothing -> do
+                    print "Socket closed."
 
 -- | Runs the bot. Right now just a single server is connected to.
 main :: IO ()
