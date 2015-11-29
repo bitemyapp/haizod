@@ -15,13 +15,6 @@ import Control.Monad.State
 import Haizod.IRC.Parse
 import Haizod.IRC.Data
 
--- | Holds the data for an IRC Server. Will probably have more
---   fields later, but for now it's just name and port number.
-data ServerData = ServerData {
-    getServerName :: String,
-    getServerPort :: Int
-    } deriving (Eq, Ord, Show)
-
 -- | Just a more firnedly name for a simple constant.
 oneSecondInMicroseconds :: Int
 oneSecondInMicroseconds = 1000000
@@ -54,10 +47,6 @@ waitToQuit connectionsTVar = atomically $ do
         then return ()
         else retry
 
-isPing :: Message -> Bool
-isPing (Unsourced (Ping m)) = True
-isPing _ = False
-
 -- | Prints out all the incoming data from the socket. Once a "PING" shows up
 --   a "QUIT" message is sent and then the socket is closed and the function returns.
 printIncoming :: Socket -> IO ()
@@ -82,12 +71,19 @@ printIncoming socket = printIncoming' ""
                 Nothing -> do
                     print "Socket closed."
 
+termEcho :: IO ()
+termEcho = do
+    line <- getLine
+    putStrLn $ "You typed: " ++ line
+    termEcho
+
 -- | Runs the bot. Right now just a single server is connected to.
 main :: IO ()
 main = withSocketsDo $ do
     let servData = ServerData "irc.freenode.net" 6667
     connectionsTVar <- atomically $ newTVar S.empty
     forkIO $ serverConnect servData connectionsTVar
+    forkIO termEcho
     -- We delay to give the first connection time to open before waiting to quit.
     threadDelay oneSecondInMicroseconds
     waitToQuit connectionsTVar
